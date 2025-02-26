@@ -1,10 +1,10 @@
 <?php
 /*
 Plugin Name: Archive.org İçerik Aktarma
-Plugin URI: 
+Plugin URI: www.hicabierdem.com
 Description: Archive.org üzerinden içerikleri WordPress'e aktarmanızı sağlar
 Version: 1.0
-Author: Your Name
+Author: Hicabi Erdem
 */
 
 // Güvenlik kontrolü
