@@ -86,6 +86,7 @@ if (!defined('ABSPATH')) exit;
 <script>
 jQuery(document).ready(function($) {
     let allItems = []; // Tüm dosyaları saklamak için
+    let currentItems = []; // Şu an görüntülenen (filtrelenmiş) dosyalar için
     
     $('#fetch_content').click(function() {
         var url = $('#archive_url').val();
@@ -142,17 +143,20 @@ jQuery(document).ready(function($) {
     });
     
     function displayItems(items) {
+        currentItems = items; // Görüntülenen öğeleri sakla
         var html = '';
         items.forEach(function(item, index) {
+            // Gerçek array indeksini sakla
+            let realIndex = allItems.indexOf(item);
             html += `
                 <tr>
-                    <td><input type="checkbox" name="items[]" value="${index}"></td>
+                    <td><input type="checkbox" name="items[]" value="${realIndex}"></td>
                     <td>${item.title}</td>
                     <td><a href="${item.link}" target="_blank">${item.link}</a></td>
                     <td>${item.size}</td>
                     <td>${item.extension.toUpperCase()}</td>
                     <td>
-                        <select name="category_${index}">
+                        <select name="category_${realIndex}">
                             <option value="">Kategori Seç</option>
                             <?php
                             foreach ($categories as $category) {
@@ -169,6 +173,41 @@ jQuery(document).ready(function($) {
         $('#content_list').show();
     }
     
+    // Üst kategori seçimi değiştiğinde
+    $('#bulk_category').change(function() {
+        var selectedCategory = $(this).val();
+        if (selectedCategory) {
+            // Görüntülenen tüm öğelerin kategori seçimini güncelle
+            $('select[name^="category_"]').val(selectedCategory);
+        }
+    });
+    
+    // Tümünü Seç butonu için olay dinleyici
+    $('#select_all').click(function() {
+        // Önce tüm görünen öğeleri seç
+        $('input[name="items[]"]').prop('checked', true);
+        
+        // Üst kategoriden seçili bir kategori varsa onu uygula
+        var selectedCategory = $('#bulk_category').val();
+        if (selectedCategory) {
+            $('select[name^="category_"]').val(selectedCategory);
+        }
+    });
+    
+    // Üst kısımdaki checkbox için olay dinleyici
+    $('#cb-select-all').change(function() {
+        // Önce tüm görünen öğeleri seç/seçimi kaldır
+        $('input[name="items[]"]').prop('checked', this.checked);
+        
+        // Üst kategoriden seçili bir kategori varsa onu uygula
+        if (this.checked) {
+            var selectedCategory = $('#bulk_category').val();
+            if (selectedCategory) {
+                $('select[name^="category_"]').val(selectedCategory);
+            }
+        }
+    });
+    
     $('#import_form').submit(function(e) {
         e.preventDefault();
         
@@ -178,6 +217,11 @@ jQuery(document).ready(function($) {
             var item = allItems[index];
             var category = $(`select[name="category_${index}"]`).val();
             
+            // Kategori seçilmemişse işleme alma
+            if (!category) {
+                return;
+            }
+            
             selectedItems.push({
                 title: item.title,
                 link: item.link,
@@ -186,21 +230,24 @@ jQuery(document).ready(function($) {
             });
         });
         
-        if (selectedItems.length > 0) {
-            $.ajax({
-                url: ajaxurl,
-                type: 'POST',
-                data: {
-                    action: 'import_archive_items',
-                    items: selectedItems
-                },
-                success: function(response) {
-                    if (response.success) {
-                        alert('Seçilen öğeler başarıyla içe aktarıldı!');
-                    }
-                }
-            });
+        if (selectedItems.length === 0) {
+            alert('Lütfen kategori seçin ve en az bir öğe seçin!');
+            return;
         }
+        
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'import_archive_items',
+                items: selectedItems
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert('Seçilen öğeler başarıyla içe aktarıldı!');
+                }
+            }
+        });
     });
 });
 </script> 

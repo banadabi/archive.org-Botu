@@ -41,6 +41,9 @@ class ArchiveScraper {
                     $href = $link->item(0)->getAttribute('href');
                     $title = trim($link->item(0)->textContent);
                     
+                    // "download" kelimesini başlıktan kaldır
+                    $title = preg_replace('/ download$/', '', $title);
+                    
                     // Dosya uzantısını al
                     $extension = $this->get_file_extension($href);
                     
